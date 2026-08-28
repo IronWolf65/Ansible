@@ -1,0 +1,7 @@
+---
+lxc:
+  hosts:
+    homepage:
+      ansible_host: 192.168.88.12
+    prometheus:
+      ansible_host: 192.168.88.70

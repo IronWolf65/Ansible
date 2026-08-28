@@ -1,0 +1,73 @@
+#ansible-playbook localmac.yml 
+---
+- name: Init
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    brewCaskPackages:
+      - keka
+      - orcaslicer
+    brewPackages:
+      - tmux
+      - btop
+      - iperf3
+      - go
+      - fzf
+      - gh
+      - ansible-lint
+      - docker
+      - docker-compose
+      # cli tool
+      - mtr
+      - nmap
+    installHomebrewIfMissing: false
+    upgradeHomebrewPackages: false
+    retriesVar: 3
+    delayVar: 5
+
+  tasks:
+    - name: Update Homebrew
+      ansible.builtin.homebrew:
+        update_homebrew: true
+      register: homebrew_result
+      retries: 1
+      delay: 10
+      until: homebrew_result is succeeded
+      ignore_errors: true
+
+    - name: Upgrading Homebrew packages
+      ansible.builtin.homebrew:
+        upgrade_all: "{{ upgradeHomebrewPackages }}"
+      register: result
+      until: result is successful
+      retries: "{{ retriesVar}}"
+      delay: "{{ delayVar }}"
+
+    - name: Installing Homebrew cask packages
+      ansible.builtin.homebrew_cask:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ brewCaskPackages }}"
+      register: result
+      until: result is successful
+      retries: "{{ retriesVar}}"
+      delay: "{{ delayVar }}"
+
+    - name: Installing Homebrew packages
+      ansible.builtin.homebrew:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ brewPackages }}"
+      register: result
+      until: result is successful
+      retries: "{{ retriesVar}}"
+      delay: "{{ delayVar }}"
+
+    - name: Set ownership and permissions for mtr-packet
+      become: true
+      ansible.builtin.file:
+        path: /opt/homebrew/sbin/mtr-packet
+        owner: root
+        # group: wheel
+        mode: '4755'

@@ -1,0 +1,45 @@
+---
+- name: Download ohmyzsh
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh
+    dest: "/home/{{ user }}/install.sh"
+    mode: '0755'
+
+- name: Install ohmyzsh
+  ansible.builtin.script:
+    cmd: "/home/{{ user }}/install.sh"
+
+- name: Install PowerLevel10K
+  ansible.builtin.git:
+    repo: https://github.com/romkatv/powerlevel10k.git
+    dest: "/home/{{ user }}/.oh-my-zsh/custom/themes/powerlevel10k"
+    depth: 1
+
+- name: Download NerdFonts
+  ansible.builtin.get_url:
+    url: hhttps://github.com/ryanoasis/nerd-fonts/releases/download/v3.4.0/FiraCode.zip
+    dest: "/home/{{ user }}/FiraCode.zip"
+
+- name: Create temp directory
+  ansible.builtin.file:
+    path: "/home/{{ user }}/FiraCode"
+    state: directory
+    mode: '0755'
+
+- name: Install font files
+  ansible.builtin.unarchive:
+    src: "/home/{{ user }}/FiraCode.zip"
+    dest: "/home/{{ user }}/FiraCode"
+
+- name: Move font files to fonts directory
+  ansible.builtin.copy:
+    src: "/home/{{ user }}/FiraCode"
+    dest: /usr/share/fonts/FiraCode
+    owner: root
+  become: true
+
+- name: Update .zshrc
+  ansible.builtin.lineinfile:
+    path: "/home/{{ user }}/.zshrc"
+    insertafter: EOF
+    line: "source /home/{{ user }}/.oh-my-zsh/custom/themes/powerlevel10k/powerlevel10k.zsh-theme"

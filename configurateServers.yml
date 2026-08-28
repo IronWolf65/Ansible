@@ -1,0 +1,6 @@
+---
+- hosts: lxc
+  roles:
+    - role: createAnsibleUser
+    # - role: setServerName
+    - role: setTimezone

@@ -1,0 +1,4 @@
+---
+- hosts: lxc
+  roles:
+    - role: createAnsibleUser

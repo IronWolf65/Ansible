@@ -1,0 +1,7 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for setServerName
+- name: Set hostname by inventory
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname }}"
+    
