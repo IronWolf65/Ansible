@@ -1,3 +1,6 @@
+HELP_COLOR = \033[36m
+RESET_COLOR = \033[0m
+
 default: help
 
 .PHONY: localmac
@@ -14,7 +17,10 @@ serverAddAnsibleUser: ## Добавление на ./inventory/tmp.yml поль�
 
 .PHONY: help
 help: ## Показать справку
-	@awk 'BEGIN {FS = ":.*##"; printf "Использование:\n  make \033[36m<цель>\033[0m\n\nЦели:\n"} \
+	@awk -v col="$(HELP_COLOR)" -v res="$(RESET_COLOR)" 'BEGIN { \
+		FS = ":.*##"; \
+		printf "Использование:\n  make %s<цель>%s\n\nЦели:\n", col, res \
+	} \
 	/^[a-zA-Z_-]+:.*##/ { \
 		count++; \
 		targets[count] = $$1; \
@@ -24,6 +30,6 @@ help: ## Показать справку
 	END { \
 		for (i = 1; i <= count; i++) { \
 			t = targets[i]; \
-			printf "  \033[36m%-*s\033[0m  %s\n", max_len, t, help[t] \
+			printf "  %s%-*s%s  %s\n", col, max_len, t, res, help[t] \
 		} \
 	}' $(MAKEFILE_LIST)
