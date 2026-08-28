@@ -1,18 +1,20 @@
-.PHONY: localmac servers serverAddAnsibleUser
-
 default: help
 
+.PHONY: localmac
 localmac: ## Настройка MacBook
 	ansible-playbook localmac.yml --ask-become-pass
 
+.PHONY: servers
 servers: ## Конфигурация серверов
 	ansible-playbook -i ./inventory/homelab.yml configurateServers.yml
 
+.PHONY: serverAddAnsibleUser
 serverAddAnsibleUser: ## Добавление на ./inventory/tmp.yml пользователя "Ansible" с его ssh ключом
 	ansible-playbook -i ./inventory/tmp.yml addAnsibleUser.yml --ask-pass --ask-become-pass -u wolf --private-key=~/.ssh/IronWolf
 
+.PHONY: help
 help: ## Показать справку
-	@awk 'BEGIN {FS = ":.*##"; printf "\nИспользование:\n  make \033[36m<цель>\033[0m\n\nЦели:\n"} \
+	@awk 'BEGIN {FS = ":.*##"; printf "Использование:\n  make \033[36m<цель>\033[0m\n\nЦели:\n"} \
 	/^[a-zA-Z_-]+:.*##/ { \
 		count++; \
 		targets[count] = $$1; \
