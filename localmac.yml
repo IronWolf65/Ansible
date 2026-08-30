@@ -27,6 +27,21 @@
     delayVar: 5
 
   tasks:
+    - name: Check is Brew is installed
+      ansible.builtin.command:
+        cmd: which brew
+      register: isBrewInstall
+      failed_when: false
+      changed_when: false
+
+    - name: Install Homebrew if not present
+      become: true
+      ansible.builtin.shell:
+        cmd: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+      environment:
+        NONINTERACTIVE: "1"
+      when: isBrewInstall is failed
+
     - name: Update Homebrew
       ansible.builtin.homebrew:
         update_homebrew: true
