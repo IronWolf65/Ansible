@@ -4,19 +4,19 @@ RESET_COLOR = \033[0m
 default: help
 
 .PHONY: localmac
-localmac: ## Настройка MacBook
+localmac: ## 💻 Настройка MacBook
 	ansible-playbook localmac.yml --ask-become-pass
 
 .PHONY: servers
-servers: ## Конфигурация серверов
+servers: ## ⚙️  Конфигурация серверов
 	ansible-playbook -i ./inventory/homelab.yml configurateServers.yml
 
 .PHONY: serverAddAnsibleUser
-serverAddAnsibleUser: ## Добавление на ./inventory/tmp.yml пользователя "Ansible" с его ssh ключом
+serverAddAnsibleUser: ## 👤 Добавление на ./inventory/tmp.yml пользователя "Ansible" с его ssh ключом
 	ansible-playbook -i ./inventory/tmp.yml addAnsibleUser.yml --ask-pass --ask-become-pass -u wolf --private-key=~/.ssh/IronWolf
 
 .PHONY: help
-help: ## Показать справку
+help: ## ℹ️  Показать справку
 	@awk -v col="$(HELP_COLOR)" -v res="$(RESET_COLOR)" 'BEGIN { \
 		FS = ":.*##"; \
 		printf "Использование:\n  make %s<цель>%s\n\nЦели:\n", col, res \
