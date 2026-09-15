@@ -14,19 +14,19 @@ default: help
 
 .PHONY: localmac
 localmac: ## 💻 Настройка MacBook
-	ansible-playbook localmac.yml
+	ansible-playbook playbooks/localmac.yml
 
 .PHONY: servers
 servers: ## ⚙️  Конфигурация серверов
-	ansible-playbook -i ./inventory/homelab.yml configurateServers.yml
+	ansible-playbook -i ./inventory/homelab.yml playbooks/configurateServers.yml
 
 .PHONY: serverAddAnsibleUser
 serverAddAnsibleUser: ## 👤 Добавление на ./inventory/tmp.yml пользователя "Ansible" с его ssh ключом
-	ansible-playbook -i ./inventory/tmp.yml addAnsibleUser.yml
+	ansible-playbook -i ./inventory/tmp.yml playbooks/addAnsibleUser.yml
 
 .PHONY: createCloudInit
 createCloudInit: ## 💿 Собирает Cloud Init template
-	ansible-playbook -i ./inventory/homelab.yml createCloudInit.yml
+	ansible-playbook -i ./inventory/homelab.yml playbooks/createCloudInit.yml
 
 .PHONY: help
 help: ## ℹ️  Показать справку
