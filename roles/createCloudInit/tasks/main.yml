@@ -1,0 +1,114 @@
+---
+- name: Обновление кэша и установка libguestfs-tools
+  ansible.builtin.apt:
+    name: libguestfs-tools
+    state: present
+    update_cache: true
+
+- name: Проверка наличия директории для загрузки образа
+  ansible.builtin.file:
+    path: "{{ proxmox_image_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Скачивание оригинального Cloud-Init образа Ubuntu
+  ansible.builtin.get_url:
+    url: "{{ proxmox_image_url }}"
+    dest: "{{ proxmox_image_dir }}/{{ proxmox_image_name }}"
+    mode: '0644'
+  register: download_image
+
+- name: Проверка, существует ли уже VM или шаблон с заданным ID
+  ansible.builtin.command:
+    cmd: "qm status {{ proxmox_vm_id }}"
+  register: qm_status
+  failed_when: false
+  changed_when: false
+
+# Если скачался новый образ и старый шаблон существует, удаляем старый шаблон
+- name: Удаление старого шаблона, если скачан новый образ
+  ansible.builtin.command:
+    cmd: "qm destroy {{ proxmox_vm_id }} --purge"
+  when: 
+    - download_image.changed
+    - qm_status.rc == 0
+  
+# Результат пишем в отдельную переменную qm_status_post_delete
+- name: Актуализация статуса VM после удаления
+  ansible.builtin.command:
+    cmd: "qm status {{ proxmox_vm_id }}"
+  register: qm_status_post_delete
+  failed_when: false
+  changed_when: false
+  when: download_image.changed
+
+# Определяем финальный код возврата
+- name: Определение актуального статуса шаблона
+  ansible.builtin.set_fact:
+    final_qm_rc: "{{ qm_status_post_delete.rc if download_image.changed else qm_status.rc }}"
+
+# Запускаем virt-customize, только если образ действительно скачался заново
+- name: Интеграция qemu-guest-agent в скачанный образ
+  ansible.builtin.command:
+    cmd: "virt-customize -a {{ proxmox_image_dir }}/{{ proxmox_image_name }} --install qemu-guest-agent"
+  register: virt_customize_result
+  changed_when: "'Installing' in virt_customize_result.stdout or virt_customize_result.rc == 0"
+  when: download_image.changed
+
+- name: Проверка типа конфигурации (VM или Шаблон)
+  ansible.builtin.command:
+    cmd: "qm config {{ proxmox_vm_id }}"
+  register: qm_config
+  failed_when: false
+  changed_when: false
+  when: final_qm_rc | int == 0
+
+- name: Создание пустой конфигурации VM (если не существует)
+  ansible.builtin.command: >
+    qm create {{ proxmox_vm_id }}
+    --name "{{ proxmox_vm_name }}"
+    --memory {{ proxmox_vm_memory }}
+    --cores {{ proxmox_vm_cores }}
+    --net0 virtio,bridge={{ proxmox_vm_bridge }}
+    --scsihw virtio-scsi-pci
+    --machine q35
+  when: final_qm_rc | int != 0
+
+- name: Первоначальный импорт диска
+  ansible.builtin.command: >
+    qm set {{ proxmox_vm_id }}
+    --scsi0 {{ proxmox_storage_pool }}:0,import-from={{ proxmox_image_dir }}/{{ proxmox_image_name }}
+  when: final_qm_rc | int != 0
+
+# ФИКС ZFS: Создаем устройство cloudinit ТОЛЬКО при первой сборке шаблона
+- name: Первоначальное создание Cloud-Init устройства
+  ansible.builtin.command: >
+    qm set {{ proxmox_vm_id }}
+    --ide2 {{ proxmox_storage_pool }}:cloudinit
+  when: final_qm_rc | int != 0
+
+# Теперь эта задача безопасно обновляет только текстовые метаданные при каждом запуске плейбука
+- name: Настройка параметров Cloud-Init (актуализируется при каждом запуске)
+  ansible.builtin.shell: >
+    qm set {{ proxmox_vm_id }}
+    --boot order=scsi0
+    --serial0 socket --vga serial0
+    --agent enabled=1
+    --ciuser {{ proxmox_ci_user }}
+    --cipassword ""
+    --sshkeys <(echo "{{ lookup('ansible.builtin.file', proxmox_ci_sshkey_path) }}")
+    --ipconfig0 ip=dhcp
+    --nameserver {{ proxmox_ci_nameserver }}
+  args:
+    executable: /bin/bash  # Теперь этот параметр полностью легитимен
+  when: final_qm_rc | int != 0 or (qm_config.rc == 0 and 'template:' in qm_config.stdout)
+
+
+- name: Регенерация Cloud-Init конфигурации
+  ansible.builtin.command: >
+    qm cloudinit update {{ proxmox_vm_id }}
+
+- name: Конвертация созданной виртуальной машины в шаблон Proxmox
+  ansible.builtin.command: >
+    qm template {{ proxmox_vm_id }}
+  when: final_qm_rc | int != 0 or (qm_config.rc == 0 and 'template:' not in qm_config.stdout)

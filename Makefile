@@ -24,6 +24,10 @@ servers: ## ⚙️  Конфигурация серверов
 serverAddAnsibleUser: ## 👤 Добавление на ./inventory/tmp.yml пользователя "Ansible" с его ssh ключом
 	ansible-playbook -i ./inventory/tmp.yml addAnsibleUser.yml --ask-pass --ask-become-pass -u wolf --private-key=~/.ssh/IronWolf
 
+.PHONY: createCloudInit
+createCloudInit: ## 💿 Собирает Cloud Init template
+	ansible-playbook -i ./inventory/homelab.yml createCloudInit.yml
+
 .PHONY: help
 help: ## ℹ️  Показать справку
 	@awk -v col="$(HELP_COLOR)" -v res="$(RESET_COLOR)" 'BEGIN { \

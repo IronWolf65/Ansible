@@ -1,0 +1,22 @@
+---
+# Идентификатор и имя шаблона
+proxmox_vm_id: 9999
+proxmox_vm_name: "noble-server-cloudimg-amd64-template"
+
+# Параметры ресурсов VM
+proxmox_vm_memory: 1024
+proxmox_vm_cores: 1
+proxmox_vm_bridge: "vmbr0"
+
+# Пути и параметры образа
+proxmox_image_dir: "/storageN150NAS/ISO/template/iso"
+proxmox_image_name: "noble-server-cloudimg-amd64.img"
+proxmox_image_url: "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"
+
+# Целевое хранилище Proxmox
+proxmox_storage_pool: "local-zfs"
+
+# Настройки Cloud-Init по умолчанию
+proxmox_ci_user: "ansible"
+proxmox_ci_sshkey_path: "~/.ssh/ansible.pub"
+proxmox_ci_nameserver: "192.168.88.1"

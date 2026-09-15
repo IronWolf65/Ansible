@@ -5,3 +5,11 @@ lxc:
       ansible_host: 192.168.88.12
     prometheus:
       ansible_host: 192.168.88.70
+
+proxmox:
+  hosts:
+    n150-nas:
+      ansible_host: 192.168.88.2
+  vars:
+    ansible_private_key_file: "~/.ssh/IronWolf"
+    ansible_user: root
