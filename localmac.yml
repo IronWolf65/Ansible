@@ -3,6 +3,10 @@
 - name: Init
   hosts: localhost
   gather_facts: false
+  vars_prompt:
+    - name: ansible_become_password
+      prompt: "Введите sudo-пароль для роли суперпользователя (root)"
+      private: true
 
   vars:
     brewCaskPackages:

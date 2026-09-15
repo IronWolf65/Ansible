@@ -14,7 +14,7 @@ default: help
 
 .PHONY: localmac
 localmac: ## 💻 Настройка MacBook
-	ansible-playbook localmac.yml --ask-become-pass
+	ansible-playbook localmac.yml
 
 .PHONY: servers
 servers: ## ⚙️  Конфигурация серверов
