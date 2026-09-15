@@ -1,4 +1,12 @@
 ---
 - hosts: lxc
+  vars_prompt:
+    - name: ansible_password
+      prompt: "Введите SSH-пароль для ключа ~/.ssh/IronWolf"
+      private: true
+
+    - name: ansible_become_password
+      prompt: "Введите sudo-пароль для роли суперпользователя (root)"
+      private: true
   roles:
     - role: createAnsibleUser

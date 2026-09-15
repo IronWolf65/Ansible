@@ -22,7 +22,7 @@ servers: ## ⚙️  Конфигурация серверов
 
 .PHONY: serverAddAnsibleUser
 serverAddAnsibleUser: ## 👤 Добавление на ./inventory/tmp.yml пользователя "Ansible" с его ssh ключом
-	ansible-playbook -i ./inventory/tmp.yml addAnsibleUser.yml --ask-pass --ask-become-pass -u wolf --private-key=~/.ssh/IronWolf
+	ansible-playbook -i ./inventory/tmp.yml addAnsibleUser.yml
 
 .PHONY: createCloudInit
 createCloudInit: ## 💿 Собирает Cloud Init template
