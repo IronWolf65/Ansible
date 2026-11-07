@@ -48,9 +48,9 @@
     final_qm_rc: "{{ qm_status_post_delete.rc if download_image.changed else qm_status.rc }}"
 
 # Запускаем virt-customize, только если образ действительно скачался заново
-- name: Интеграция qemu-guest-agent в скачанный образ
+- name: Интеграция qemu-guest-agent и сброс machine-id в скачанном образе
   ansible.builtin.command:
-    cmd: "virt-customize -a {{ proxmox_image_dir }}/{{ proxmox_image_name }} --install qemu-guest-agent"
+    cmd: "virt-customize -a {{ proxmox_image_dir }}/{{ proxmox_image_name }} --install qemu-guest-agent --run-command 'truncate -s 0 /etc/machine-id'"
   register: virt_customize_result
   changed_when: "'Installing' in virt_customize_result.stdout or virt_customize_result.rc == 0"
   when: download_image.changed
