@@ -1,7 +1,7 @@
 ---
 # Идентификатор и имя шаблона
 proxmox_vm_id: 9999
-proxmox_vm_name: "noble-server-cloudimg-amd64-template"
+proxmox_vm_name: "ubuntu-cloudimg"
 
 # Параметры ресурсов VM
 proxmox_vm_memory: 1024
