@@ -25,7 +25,6 @@
       # cli tool
       - mtr
       - nmap
-    installHomebrewIfMissing: false
     upgradeHomebrewPackages: false
     retriesVar: 3
     delayVar: 5
@@ -39,12 +38,11 @@
       changed_when: false
 
     - name: Install Homebrew if not present
-      become: true
       ansible.builtin.shell:
         cmd: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
       environment:
         NONINTERACTIVE: "1"
-      when: isBrewInstall is failed
+      when: isBrewInstall.rc != 0
 
     - name: Update Homebrew
       ansible.builtin.homebrew:
