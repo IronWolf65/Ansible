@@ -17,7 +17,7 @@
 
 - name: Download NerdFonts
   ansible.builtin.get_url:
-    url: hhttps://github.com/ryanoasis/nerd-fonts/releases/download/v3.4.0/FiraCode.zip
+    url: https://github.com/ryanoasis/nerd-fonts/releases/download/v3.4.0/FiraCode.zip
     dest: "/home/{{ user }}/FiraCode.zip"
 
 - name: Create temp directory
