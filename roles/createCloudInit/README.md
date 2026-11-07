@@ -1,38 +1,63 @@
-Role Name
-=========
+# createCloudInit
 
-A brief description of the role goes here.
+Собирает на хосте Proxmox шаблон VM из официального Ubuntu Cloud Image: скачивает образ, кастомизирует его через `virt-customize`, импортирует диск, настраивает Cloud-Init и конвертирует VM в шаблон. Если образ скачался заново, старый шаблон с тем же ID удаляется и собирается новый.
 
-Requirements
-------------
+## Requirements
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+- Хост Proxmox VE с `qm`; роль ставит `libguestfs-tools` (нужен `virt-customize`) через `apt`.
+- Права root на хосте Proxmox (`become: true`).
+- Публичный ключ `proxmox_ci_sshkey_path` на управляющей машине.
+- Директория `proxmox_image_dir` на хосте (создаётся ролью), место под образ ~600 МБ.
+- Доступ к `cloud-images.ubuntu.com`.
 
-Role Variables
---------------
+## Role Variables
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+Все переменные лежат в `defaults/main.yml`.
 
-Dependencies
-------------
+| Переменная | По умолчанию | Описание |
+| --- | --- | --- |
+| `proxmox_vm_id` | `9999` | ID VM/шаблона в Proxmox. |
+| `proxmox_vm_name` | `noble-server-cloudimg-amd64-template` | Имя шаблона. |
+| `proxmox_vm_memory` | `1024` | RAM, МБ. |
+| `proxmox_vm_cores` | `1` | Количество ядер. |
+| `proxmox_vm_bridge` | `vmbr0` | Сетевой мост. |
+| `proxmox_image_dir` | `/storageN150NAS/ISO/template/iso` | Куда скачивать образ. |
+| `proxmox_image_name` | `noble-server-cloudimg-amd64.img` | Имя файла образа. |
+| `proxmox_image_url` | `https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img` | Откуда скачивать образ. |
+| `proxmox_image_customize_args` | `--install qemu-guest-agent`, `--run-command 'truncate -s 0 /etc/machine-id'` | Аргументы `virt-customize`, по одному на элемент списка. |
+| `proxmox_storage_pool` | `local-zfs` | Хранилище для диска и Cloud-Init. |
+| `proxmox_ci_user` | `ansible` | Пользователь Cloud-Init. |
+| `proxmox_ci_sshkey_path` | `~/.ssh/ansible.pub` | Публичный ключ, добавляемый в шаблон. |
+| `proxmox_ci_nameserver` | `192.168.88.1` | DNS для гостей. |
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+Как работает:
 
-Example Playbook
-----------------
+- Образ проверяется по `SHA256SUMS` из каталога `proxmox_image_url`; скачивание повторяется 2 раза при ошибке.
+- `virt-customize` запускается только при новом образе и **до** удаления старого шаблона: если кастомизация упадёт, рабочий шаблон останется.
+- В описание шаблона пишутся дата образа, дата пересборки и список применённых изменений.
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+## Dependencies
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+Нет. `libguestfs-tools` ставится самой ролью.
 
-License
--------
+## Example Playbook
+
+```yaml
+- hosts: proxmox
+  become: true
+  vars_prompt:
+    - name: ansible_password
+      prompt: "Пароль SSH"
+      private: true
+    - name: ansible_become_password
+      prompt: "Пароль sudo"
+      private: true
+  roles:
+    - role: createCloudInit
+```
+
+Готовый плейбук: `playbooks/createCloudInit.yml`, запуск — `make createCloudInit`.
+
+## License
 
 BSD
-
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
