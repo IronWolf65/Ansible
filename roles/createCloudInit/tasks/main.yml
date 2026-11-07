@@ -15,8 +15,18 @@
   ansible.builtin.get_url:
     url: "{{ proxmox_image_url }}"
     dest: "{{ proxmox_image_dir }}/{{ proxmox_image_name }}"
+    checksum: "sha256:{{ proxmox_image_url | dirname }}/SHA256SUMS"
+    timeout: 60
     mode: '0644'
   register: download_image
+  retries: 2
+  delay: 10
+  until: download_image is succeeded
+
+- name: Проверка даты обновления образа
+  ansible.builtin.stat:
+    path: "{{ proxmox_image_dir }}/{{ proxmox_image_name }}"
+  register: image_file
 
 - name: Проверка, существует ли уже VM или шаблон с заданным ID
   ansible.builtin.command:
@@ -25,14 +35,22 @@
   failed_when: false
   changed_when: false
 
+# Кастомизируем образ до удаления шаблона: если virt-customize упадёт, старый шаблон останется
+- name: Интеграция qemu-guest-agent и сброс machine-id в скачанном образе
+  ansible.builtin.command:
+    cmd: "virt-customize -a {{ proxmox_image_dir }}/{{ proxmox_image_name }} {{ proxmox_image_customize_args | join(' ') }}"
+  register: virt_customize_result
+  changed_when: "'Installing' in virt_customize_result.stdout or virt_customize_result.rc == 0"
+  when: download_image.changed
+
 # Если скачался новый образ и старый шаблон существует, удаляем старый шаблон
 - name: Удаление старого шаблона, если скачан новый образ
   ansible.builtin.command:
-    cmd: "qm destroy {{ proxmox_vm_id }} --purge"
-  when: 
+    cmd: "qm destroy {{ proxmox_vm_id }}"
+  when:
     - download_image.changed
     - qm_status.rc == 0
-  
+
 # Результат пишем в отдельную переменную qm_status_post_delete
 - name: Актуализация статуса VM после удаления
   ansible.builtin.command:
@@ -46,14 +64,6 @@
 - name: Определение актуального статуса шаблона
   ansible.builtin.set_fact:
     final_qm_rc: "{{ qm_status_post_delete.rc if download_image.changed else qm_status.rc }}"
-
-# Запускаем virt-customize, только если образ действительно скачался заново
-- name: Интеграция qemu-guest-agent и сброс machine-id в скачанном образе
-  ansible.builtin.command:
-    cmd: "virt-customize -a {{ proxmox_image_dir }}/{{ proxmox_image_name }} --install qemu-guest-agent --run-command 'truncate -s 0 /etc/machine-id'"
-  register: virt_customize_result
-  changed_when: "'Installing' in virt_customize_result.stdout or virt_customize_result.rc == 0"
-  when: download_image.changed
 
 - name: Проверка типа конфигурации (VM или Шаблон)
   ansible.builtin.command:
@@ -95,7 +105,6 @@
     --serial0 socket --vga serial0
     --agent enabled=1
     --ciuser {{ proxmox_ci_user }}
-    --cipassword ""
     --sshkeys <(echo "{{ lookup('ansible.builtin.file', proxmox_ci_sshkey_path) }}")
     --ipconfig0 ip=dhcp
     --nameserver {{ proxmox_ci_nameserver }}
@@ -112,3 +121,27 @@
   ansible.builtin.command: >
     qm template {{ proxmox_vm_id }}
   when: final_qm_rc | int != 0 or (qm_config.rc == 0 and 'template:' not in qm_config.stdout)
+
+- name: Примечание шаблона с датой обновления образа
+  ansible.builtin.command:
+    argv:
+      - qm
+      - set
+      - "{{ proxmox_vm_id }}"
+      - --description
+      - "{{ proxmox_template_notes | trim }}"
+  vars:
+    proxmox_template_notes: |
+      <div>
+      <b>Cloud image:</b> {{ proxmox_image_name }}<br>
+      <b>Образ обновлён:</b> {{ '%Y-%m-%d %H:%M' | strftime(image_file.stat.mtime | int) }}<br>
+      <b>Шаблон пересобран:</b> {{ '%Y-%m-%d %H:%M' | strftime }}<br>
+      <b>Изменения в образе:</b>
+      <ul>
+      {% for arg in proxmox_image_customize_args %}
+      <li>{{ arg }}</li>
+      {% endfor %}
+      </ul>
+      </div>
+  when: final_qm_rc | int != 0 or (qm_config.rc == 0 and 'template:' not in qm_config.stdout)
+  changed_when: false

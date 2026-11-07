@@ -13,6 +13,11 @@ proxmox_image_dir: "/storageN150NAS/ISO/template/iso"
 proxmox_image_name: "noble-server-cloudimg-amd64.img"
 proxmox_image_url: "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"
 
+# Что модифицируем в образе: одна строка = один аргумент virt-customize
+proxmox_image_customize_args:
+  - "--install qemu-guest-agent"
+  - "--run-command 'truncate -s 0 /etc/machine-id'"
+
 # Целевое хранилище Proxmox
 proxmox_storage_pool: "local-zfs"
 
