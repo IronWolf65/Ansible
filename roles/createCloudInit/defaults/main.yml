@@ -20,6 +20,8 @@ proxmox_image_customize_args:
 
 # Целевое хранилище Proxmox
 proxmox_storage_pool: "local-zfs"
+# Минимум свободного места на пуле перед удалением старого шаблона, байты (5 GiB)
+proxmox_min_free_space: 5368709120
 
 # Настройки Cloud-Init по умолчанию
 proxmox_ci_user: "ansible"

@@ -17,7 +17,7 @@
 | Переменная | По умолчанию | Описание |
 | --- | --- | --- |
 | `proxmox_vm_id` | `9999` | ID VM/шаблона в Proxmox. |
-| `proxmox_vm_name` | `noble-server-cloudimg-amd64-template` | Имя шаблона. |
+| `proxmox_vm_name` | `ubuntu-cloudimg` | Имя шаблона. |
 | `proxmox_vm_memory` | `1024` | RAM, МБ. |
 | `proxmox_vm_cores` | `1` | Количество ядер. |
 | `proxmox_vm_bridge` | `vmbr0` | Сетевой мост. |
@@ -26,6 +26,7 @@
 | `proxmox_image_url` | `https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img` | Откуда скачивать образ. |
 | `proxmox_image_customize_args` | `--install qemu-guest-agent`, `--run-command 'truncate -s 0 /etc/machine-id'` | Аргументы `virt-customize`, по одному на элемент списка. |
 | `proxmox_storage_pool` | `local-zfs` | Хранилище для диска и Cloud-Init. |
+| `proxmox_min_free_space` | `5368709120` (5 GiB) | Минимум свободного места на пуле перед удалением старого шаблона, байты. |
 | `proxmox_ci_user` | `ansible` | Пользователь Cloud-Init. |
 | `proxmox_ci_sshkey_path` | `~/.ssh/ansible.pub` | Публичный ключ, добавляемый в шаблон. |
 | `proxmox_ci_nameserver` | `192.168.88.1` | DNS для гостей. |
@@ -34,6 +35,7 @@
 
 - Образ проверяется по `SHA256SUMS` из каталога `proxmox_image_url`; скачивание повторяется 2 раза при ошибке.
 - `virt-customize` запускается только при новом образе и **до** удаления старого шаблона: если кастомизация упадёт, рабочий шаблон останется.
+- Перед удалением старого шаблона проверяется свободное место на `proxmox_storage_pool`: если его меньше `proxmox_min_free_space`, плейбук падает, не трогая шаблон.
 - В описание шаблона пишутся дата образа, дата пересборки и список применённых изменений.
 
 ## Dependencies

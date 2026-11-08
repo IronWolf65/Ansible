@@ -43,6 +43,31 @@
   changed_when: "'Installing' in virt_customize_result.stdout or virt_customize_result.rc == 0"
   when: download_image.changed
 
+# Перед удалением старого шаблона проверяем, что места на пуле хватит на импорт нового диска
+- name: Проверка свободного места на пуле
+  ansible.builtin.shell: |
+    set -o pipefail
+    pvesm status --storage {{ proxmox_storage_pool }} | awk '$1 == "{{ proxmox_storage_pool }}" {print $6 * 1024}'
+  args:
+    executable: /bin/bash
+  register: pool_available
+  changed_when: false
+  when:
+    - download_image.changed
+    - qm_status.rc == 0
+
+- name: Проверка, что на пуле хватает места
+  ansible.builtin.assert:
+    that: pool_available.stdout | int >= proxmox_min_free_space
+    fail_msg: >-
+      На {{ proxmox_storage_pool }} свободно
+      {{ pool_available.stdout | int | human_readable }},
+      нужно минимум {{ proxmox_min_free_space | human_readable }}.
+      Старый шаблон не тронут: освободите место и запустите снова.
+  when:
+    - download_image.changed
+    - qm_status.rc == 0
+
 # Если скачался новый образ и старый шаблон существует, удаляем старый шаблон
 - name: Удаление старого шаблона, если скачан новый образ
   ansible.builtin.command:
@@ -110,7 +135,7 @@
     --nameserver {{ proxmox_ci_nameserver }}
   args:
     executable: /bin/bash  # Теперь этот параметр полностью легитимен
-  when: final_qm_rc | int != 0 or (qm_config.rc == 0 and 'template:' in qm_config.stdout)
+  changed_when: false
 
 
 - name: Регенерация Cloud-Init конфигурации
