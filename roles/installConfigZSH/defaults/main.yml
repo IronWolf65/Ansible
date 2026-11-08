@@ -5,6 +5,10 @@
 # Домашний каталог пользователя; переопредели, если путь нестандартный
 user_home: "{{ ('/Users/' if is_macos else '/home/') ~ user }}"
 
+# Последний стабильный релиз Nerd Fonts (тег берётся из GitHub API, анонимный лимит 60 запросов в час);
+# можно закрепить вручную, например: nerd_fonts_version: v3.4.0
+nerd_fonts_version: "{{ (lookup('url', 'https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest', headers={'Accept': 'application/vnd.github+json'}, split_lines=False) | from_json).tag_name }}"
+
 # Куда устанавливать шрифты
 fonts_dir: "{{ user_home ~ '/Library/Fonts' if is_macos else '/usr/share/fonts/FiraCode' }}"
 

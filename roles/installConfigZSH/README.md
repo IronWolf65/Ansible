@@ -16,6 +16,7 @@
 | `user` | не задана | Имя пользователя. Обязательна — задаётся в плейбуке или inventory. |
 | `user_home` | `/home/{{ user }}` (Linux) или `/Users/{{ user }}` (macOS) | Домашний каталог. Переопредели, если путь нестандартный. |
 | `fonts_dir` | `/usr/share/fonts/FiraCode` (Linux) или `~/Library/Fonts` (macOS) | Куда устанавливать шрифты. |
+| `nerd_fonts_version` | последний стабильный релиз из GitHub API | Тег Nerd Fonts; можно закрепить вручную, например `v3.4.0`. |
 | `is_macos` | вычисляется по фактам | Выбор путей и пакетного менеджера. |
 
 ## Dependencies

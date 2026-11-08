@@ -46,8 +46,8 @@
 
 - name: Download NerdFonts
   ansible.builtin.get_url:
-    url: https://github.com/ryanoasis/nerd-fonts/releases/download/v3.4.0/FiraCode.zip
-    dest: "{{ user_home }}/FiraCode.zip"
+    url: "https://github.com/ryanoasis/nerd-fonts/releases/download/{{ nerd_fonts_version }}/FiraCode.zip"
+    dest: "{{ user_home }}/FiraCode-{{ nerd_fonts_version }}.zip"
     mode: '0644'
   become: "{{ not is_macos }}"
   become_user: "{{ user }}"
@@ -62,7 +62,7 @@
 
 - name: Install font files
   ansible.builtin.unarchive:
-    src: "{{ user_home }}/FiraCode.zip"
+    src: "{{ user_home }}/FiraCode-{{ nerd_fonts_version }}.zip"
     dest: "{{ user_home }}/FiraCode"
     remote_src: true
   become: "{{ not is_macos }}"
