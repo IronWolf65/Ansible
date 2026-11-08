@@ -1,4 +1,5 @@
 .DS_Store
 .vscode/
+.ansible/
 tmp/
 inventory/tmp.yml
