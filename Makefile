@@ -12,6 +12,10 @@ RESET_COLOR = \033[0m
 
 default: help
 
+.PHONY: deps
+deps: ## 📦 Установка Ansible-коллекций
+	ansible-galaxy collection install -r requirements.yml
+
 .PHONY: localmac
 localmac: ## 💻 Настройка MacBook
 	ansible-playbook playbooks/localmac.yml
