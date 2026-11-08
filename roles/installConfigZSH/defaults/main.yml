@@ -1,3 +1,12 @@
 #SPDX-License-Identifier: MIT-0
 ---
 # defaults file for installConfigZSH
+
+# Домашний каталог пользователя; переопредели, если путь нестандартный
+user_home: "{{ ('/Users/' if is_macos else '/home/') ~ user }}"
+
+# Куда устанавливать шрифты
+fonts_dir: "{{ user_home ~ '/Library/Fonts' if is_macos else '/usr/share/fonts/FiraCode' }}"
+
+# Выбор путей и пакетного менеджера по ОС
+is_macos: "{{ ansible_facts['system'] == 'Darwin' }}"
