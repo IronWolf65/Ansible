@@ -1,5 +1,6 @@
 ---
 - hosts: lxc
+  become: true
   vars_prompt:
     - name: ansible_password
       prompt: "Введите SSH-пароль для ключа ~/.ssh/ansible"
